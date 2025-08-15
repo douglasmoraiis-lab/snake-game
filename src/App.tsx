@@ -3,7 +3,6 @@ import type { Coords } from "./types";
 import GameBoard from "./GameBoard";
 import GameUI from "./GameUI";
 
-// Tamanho do tabuleiro
 const BOARD_SIZE = 20;
 const INITIAL_SPEED = 100;
 
@@ -17,10 +16,9 @@ const App: React.FC = () => {
   const [speed, setSpeed] = useState<number>(INITIAL_SPEED);
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
 
-  // Novo estado para escolher controle
-  const [controlMode, setControlMode] = useState<"keyboard" | "mouse">("keyboard");
+  // Controle: keyboard | mouse | touch
+  const [controlMode, setControlMode] = useState<"keyboard" | "mouse" | "touch">("keyboard");
 
-  // Gera nova comida
   const generateFood = useCallback((): Coords => {
     let newFood: Coords;
     do {
@@ -32,7 +30,6 @@ const App: React.FC = () => {
     return newFood;
   }, [snake]);
 
-  // Reinicia o jogo
   const handleReset = useCallback(() => {
     setSnake([[10, 10]]);
     setFood(generateFood());
@@ -44,18 +41,16 @@ const App: React.FC = () => {
     setIsGamePaused(false);
   }, [generateFood]);
 
-  // Inicia o jogo
   const handleStartGame = useCallback(() => {
     setIsGameStarted(true);
     if (gameOver) handleReset();
   }, [gameOver, handleReset]);
 
-  // Pausa / retoma
   const togglePause = useCallback(() => {
     if (isGameStarted && !gameOver) setIsGamePaused(prev => !prev);
   }, [isGameStarted, gameOver]);
 
-  // Loop principal do jogo
+  // Loop do jogo
   useEffect(() => {
     if (gameOver || !isGameStarted || isGamePaused) return;
 
@@ -72,7 +67,7 @@ const App: React.FC = () => {
         default: return;
       }
 
-      // Checa colisão com paredes
+      // Colisão com paredes
       if (
         newHead[0] < 0 || newHead[0] >= BOARD_SIZE ||
         newHead[1] < 0 || newHead[1] >= BOARD_SIZE
@@ -81,7 +76,7 @@ const App: React.FC = () => {
         return;
       }
 
-      // Checa colisão com o próprio corpo
+      // Colisão com o próprio corpo
       if (newSnake.some(([x, y]) => x === newHead[0] && y === newHead[1])) {
         setGameOver(true);
         return;
@@ -89,7 +84,7 @@ const App: React.FC = () => {
 
       newSnake.unshift(newHead);
 
-      // Checa se comeu a comida
+      // Comer comida
       if (newHead[0] === food[0] && newHead[1] === food[1]) {
         setScore(prev => prev + 1);
         setFood(generateFood());
@@ -104,25 +99,32 @@ const App: React.FC = () => {
     return () => clearTimeout(gameLoop);
   }, [snake, direction, gameOver, isGameStarted, isGamePaused, food, speed, generateFood]);
 
-  // Controle pelo teclado (setas + WASD)
+  // Teclado (Arrow + WASD)
   useEffect(() => {
     if (controlMode !== "keyboard") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        // Setas
-        case "ArrowUp": if (direction !== "DOWN") setDirection("UP"); break;
-        case "ArrowDown": if (direction !== "UP") setDirection("DOWN"); break;
-        case "ArrowLeft": if (direction !== "RIGHT") setDirection("LEFT"); break;
-        case "ArrowRight": if (direction !== "LEFT") setDirection("RIGHT"); break;
-
-        // WASD
-        case "w": case "W": if (direction !== "DOWN") setDirection("UP"); break;
-        case "s": case "S": if (direction !== "UP") setDirection("DOWN"); break;
-        case "a": case "A": if (direction !== "RIGHT") setDirection("LEFT"); break;
-        case "d": case "D": if (direction !== "LEFT") setDirection("RIGHT"); break;
-
-        // Espaço para pausar/iniciar
+        case "ArrowUp":
+        case "w":
+        case "W":
+          if (direction !== "DOWN") setDirection("UP");
+          break;
+        case "ArrowDown":
+        case "s":
+        case "S":
+          if (direction !== "UP") setDirection("DOWN");
+          break;
+        case "ArrowLeft":
+        case "a":
+        case "A":
+          if (direction !== "RIGHT") setDirection("LEFT");
+          break;
+        case "ArrowRight":
+        case "d":
+        case "D":
+          if (direction !== "LEFT") setDirection("RIGHT");
+          break;
         case " ":
           e.preventDefault();
           if (isGameStarted) togglePause();
@@ -133,9 +135,9 @@ const App: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [direction, isGameStarted, handleStartGame, togglePause, controlMode]);
+  }, [direction, isGameStarted, togglePause, handleStartGame, controlMode]);
 
-  // Controle pelo mouse
+  // Mouse
   useEffect(() => {
     if (controlMode !== "mouse" || gameOver || !isGameStarted || isGamePaused) return;
 
@@ -160,6 +162,44 @@ const App: React.FC = () => {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [controlMode, direction, gameOver, isGameStarted, isGamePaused]);
+
+  // Touch / Swipe
+  useEffect(() => {
+    if (controlMode !== "touch" || gameOver || !isGameStarted || isGamePaused) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX > 0 && direction !== "LEFT") setDirection("RIGHT");
+        else if (deltaX < 0 && direction !== "RIGHT") setDirection("LEFT");
+      } else {
+        if (deltaY > 0 && direction !== "UP") setDirection("DOWN");
+        else if (deltaY < 0 && direction !== "DOWN") setDirection("UP");
+      }
+
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    };
+
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove", handleTouchMove);
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
   }, [controlMode, direction, gameOver, isGameStarted, isGamePaused]);
 
   return (
