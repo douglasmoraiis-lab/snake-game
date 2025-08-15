@@ -2,6 +2,7 @@ import React from "react";
 import type { Coords } from "./types";
 
 interface GameBoardProps {
+  id?: string;
   snake: Coords[];
   food: Coords;
   gameOver: boolean;
@@ -12,6 +13,7 @@ interface GameBoardProps {
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
+  id,
   snake,
   food,
   gameOver,
@@ -22,6 +24,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
   return (
     <div
+      id={id}
       className="relative grid grid-cols-20 grid-rows-20 border-4 border-emerald-500 bg-gray-800 shadow-2xl rounded-lg"
       style={{
         width: `min(80vw, 500px)`,
@@ -31,9 +34,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {snake.map(([x, y], index) => (
         <div
           key={index}
-          className={`absolute rounded-full transition-all duration-100 ${
-            index === 0 ? 'bg-emerald-400 shadow-xl' : 'bg-emerald-500'
-          }`}
+          className={`absolute rounded-full transition-all duration-100 ${index === 0 ? 'bg-emerald-400 shadow-xl' : 'bg-emerald-500'}`}
           style={{
             left: `${y * (100 / boardSize)}%`,
             top: `${x * (100 / boardSize)}%`,
