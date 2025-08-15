@@ -104,16 +104,25 @@ const App: React.FC = () => {
     return () => clearTimeout(gameLoop);
   }, [snake, direction, gameOver, isGameStarted, isGamePaused, food, speed, generateFood]);
 
-  // Controle pelo teclado
+  // Controle pelo teclado (setas + WASD)
   useEffect(() => {
     if (controlMode !== "keyboard") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
+        // Setas
         case "ArrowUp": if (direction !== "DOWN") setDirection("UP"); break;
         case "ArrowDown": if (direction !== "UP") setDirection("DOWN"); break;
         case "ArrowLeft": if (direction !== "RIGHT") setDirection("LEFT"); break;
         case "ArrowRight": if (direction !== "LEFT") setDirection("RIGHT"); break;
+
+        // WASD
+        case "w": case "W": if (direction !== "DOWN") setDirection("UP"); break;
+        case "s": case "S": if (direction !== "UP") setDirection("DOWN"); break;
+        case "a": case "A": if (direction !== "RIGHT") setDirection("LEFT"); break;
+        case "d": case "D": if (direction !== "LEFT") setDirection("RIGHT"); break;
+
+        // Espaço para pausar/iniciar
         case " ":
           e.preventDefault();
           if (isGameStarted) togglePause();
